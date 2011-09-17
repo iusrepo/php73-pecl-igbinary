@@ -27,6 +27,8 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-root-%(%{__id_u} -n)
 BuildRequires:  php-devel >= 5.2.0
 %if %{withapc}
 BuildRequires:  php-pecl-apc-devel >= 3.1.7
+%else
+BuildRequires:  php-pear
 %endif
 
 Requires(post): %{__pecl}
