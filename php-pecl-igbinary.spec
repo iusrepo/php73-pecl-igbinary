@@ -3,10 +3,17 @@
 
 %global    extname   igbinary
 
+%if 0%{?fedora} >= 14
+%global withapc 1
+%else
+# EL-6 only provides 3.1.3pl1
+%global withapc 0
+%endif
+
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        1.1.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 License:        BSD
 Group:          System Environment/Libraries
 
@@ -18,7 +25,9 @@ Source1:        %{extname}-tests.tgz
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-root-%(%{__id_u} -n)
 BuildRequires:  php-devel >= 5.2.0
+%if %{withapc}
 BuildRequires:  php-pecl-apc-devel >= 3.1.7
+%endif
 
 Requires(post): %{__pecl}
 Requires(postun): %{__pecl}
@@ -27,10 +36,11 @@ Requires:       php(api) = %{php_core_api}
 Provides:       php-pecl(%{extname}) = %{version}
 
 
-%{?filter_setup:
-%filter_provides_in %{php_extdir}/.*\.so$
-%filter_setup
-}
+# RPM 4.8
+%{?filter_provides_in: %filter_provides_in %{php_extdir}/.*\.so$}
+%{?filter_setup}
+# RPM 4.9
+%global __provides_exclude_from %{?__provides_exclude_from:%__provides_exclude_from|}%{php_extdir}/.*\\.so$
 
 
 %description
@@ -54,27 +64,8 @@ These are the files needed to compile programs using Igbinary
 
 %prep
 %setup -q -c
-cd %{extname}-%{version}
-%{__tar} xzf %{SOURCE1}
 
-%build
-cd %{extname}-%{version}
-%{_bindir}/phpize
-%{configure} --with-php-config=%{_bindir}/php-config
-%{__make} %{?_smp_mflags}
-
-
-%install
-%{__rm} -rf %{buildroot}
-
-%{__mkdir_p} %{buildroot}%{pecl_xmldir}
-%{__install} -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
-
-cd %{extname}-%{version}
-%{__make} install INSTALL_ROOT=%{buildroot}
-
-%{__mkdir} -p %{buildroot}%{_sysconfdir}/php.d/
-%{__cat} > %{buildroot}%{_sysconfdir}/php.d/%{extname}.ini <<EOF
+cat <<EOF | tee %{extname}.ini
 ; Enable %{extname} extension module
 extension=%{extname}.so
 
@@ -85,9 +76,32 @@ extension=%{extname}.so
 ; Use igbinary as session serializer
 ;session.serialize_handler=igbinary
 
+%if %{withapc}
 ; Use igbinary as APC serializer
 ;apc.serializer=igbinary
+%endif
 EOF
+
+cd %{extname}-%{version}
+tar xzf %{SOURCE1}
+
+
+%build
+cd %{extname}-%{version}
+%{_bindir}/phpize
+%configure --with-php-config=%{_bindir}/php-config
+make %{?_smp_mflags}
+
+
+%install
+rm -rf %{buildroot}
+
+make install -C %{extname}-%{version} \
+     INSTALL_ROOT=%{buildroot}
+
+install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
+
+install -D -m 644 %{extname}.ini %{buildroot}%{_sysconfdir}/php.d/%{extname}.ini
 
 
 %check
@@ -100,15 +114,17 @@ cd %{extname}-%{version}
     --define extension=%{extname}.so \
     --modules | grep %{extname}
 
+%if %{withapc}
 # APC required for test 045
-%{__ln_s} %{php_extdir}/apc.so modules/
+ln -s %{php_extdir}/apc.so modules/
+%endif
 
-NO_INTERACTION=1 %{__make} test | tee rpmtests.log
+NO_INTERACTION=1 make test | tee rpmtests.log
 grep -q "FAILED TEST" rpmtests.log && exit 1
 
 
 %clean
-%{__rm} -rf %{buildroot}
+rm -rf %{buildroot}
 
 
 %post
@@ -138,6 +154,9 @@ fi
 
 
 %changelog
+* Sat Sep 17 2011 Remi Collet <rpms@famillecollet.com> 1.1.1-2
+- clean spec, adapted filters
+
 * Mon Mar 14 2011 Remi Collet <rpms@famillecollet.com> 1.1.1-1
 - version 1.1.1 published on pecl.php.net
 - rename to php-pecl-igbinary
