@@ -13,7 +13,7 @@
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        1.1.1
-Release:        2%{?dist}
+Release:        3%{?dist}
 License:        BSD
 Group:          System Environment/Libraries
 
@@ -58,7 +58,7 @@ based storages for serialized data.
 Summary:       Igbinary developer files (header)
 Group:         Development/Libraries
 Requires:      php-pecl-%{extname}%{?_isa} = %{version}-%{release}
-Requires:      php-devel%{?_isa}
+Requires:      php-devel
 
 %description devel
 These are the files needed to compile programs using Igbinary
@@ -156,6 +156,9 @@ fi
 
 
 %changelog
+* Sun Sep 18 2011 Remi Collet <rpms@famillecollet.com> 1.1.1-3
+- fix EPEL-6 build, no arch version for php-devel
+
 * Sat Sep 17 2011 Remi Collet <rpms@famillecollet.com> 1.1.1-2
 - clean spec, adapted filters
 
