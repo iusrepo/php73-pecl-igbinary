@@ -13,7 +13,7 @@
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        1.1.1
-Release:        3%{?dist}
+Release:        4%{?dist}
 License:        BSD
 Group:          System Environment/Libraries
 
@@ -156,6 +156,9 @@ fi
 
 
 %changelog
+* Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.1-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
 * Sun Sep 18 2011 Remi Collet <rpms@famillecollet.com> 1.1.1-3
 - fix EPEL-6 build, no arch version for php-devel
 
