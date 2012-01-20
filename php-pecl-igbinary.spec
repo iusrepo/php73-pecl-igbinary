@@ -185,7 +185,7 @@ fi
 
 
 %changelog
-* Mon Dec 05 2011 Remi Collet <remi@fedoraproject.org> - 1.1.2-0.1.git3b8ab7e
+* Fri Jan 20 2012 Collet <remi@fedoraproject.org> - 1.1.2-0.1.git3b8ab7e
 - update to git snapshot for php 5.4
 
 * Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.1-4
