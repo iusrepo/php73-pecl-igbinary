@@ -188,6 +188,9 @@ fi
 * Mon Dec 05 2011 Remi Collet <remi@fedoraproject.org> - 1.1.2-0.1.git3b8ab7e
 - update to git snapshot for php 5.4
 
+* Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.1-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
 * Sun Sep 18 2011 Remi Collet <rpms@famillecollet.com> 1.1.1-3
 - fix EPEL-6 build, no arch version for php-devel
 
