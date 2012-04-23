@@ -16,7 +16,7 @@ Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        1.1.2
 %if 0%{?gitver:1}
-Release:	0.1.git%{gitver}%{?dist}
+Release:	0.2.git%{gitver}%{?dist}
 Source0:	igbinary-igbinary-1.1.1-15-g3b8ab7e.tar.gz
 %else
 Release:        2%{?dist}
@@ -48,12 +48,10 @@ Requires:       php(api) = %{php_core_api}
 Provides:       php-pecl(%{extname}) = %{version}
 
 # RPM 4.8
-%{?filter_provides_in: %filter_provides_in %{php_extdir}/.*\.so$}
-%{?filter_provides_in: %filter_provides_in %{php_ztsextdir}/.*\.so$}
+%{?filter_provides_in: %filter_provides_in %{_libdir}/.*\.so$}
 %{?filter_setup}
 # RPM 4.9
-%global __provides_exclude_from %{?__provides_exclude_from:%__provides_exclude_from|}%{php_extdir}/.*\\.so$
-%global __provides_exclude_from %__provides_exclude_from|%{php_ztsextdir}/.*\\.so$
+%global __provides_exclude_from %{?__provides_exclude_from:%__provides_exclude_from|}%{_libdir}/.*\\.so$
 
 
 %description
@@ -115,12 +113,21 @@ extension=%{extname}.so
 %endif
 EOF
 
+cp -r %{extname}-%{version} %{extname}-%{version}-zts
+
 
 %build
 cd %{extname}-%{version}
 %{_bindir}/phpize
 %configure --with-php-config=%{_bindir}/php-config
 make %{?_smp_mflags}
+
+%if 0%{?__ztsphp:1}
+cd ../%{extname}-%{version}-zts
+%{_bindir}/zts-phpize
+%configure --with-php-config=%{_bindir}/zts-php-config
+make %{?_smp_mflags}
+%endif
 
 
 %install
@@ -133,17 +140,28 @@ install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
 
 install -D -m 644 %{extname}.ini %{buildroot}%{_sysconfdir}/php.d/%{extname}.ini
 
+# Install the ZTS stuff
+%if 0%{?__ztsphp:1}
+make install -C %{extname}-%{version}-zts \
+     INSTALL_ROOT=%{buildroot}
+install -D -m 644 %{extname}.ini %{buildroot}%{php_ztsinidir}/%{extname}.ini
+%endif
+
 
 %check
-cd %{extname}-%{version}
-
 # simple module load test
 # without APC to ensure than can run without
 %{_bindir}/php --no-php-ini \
-    --define extension_dir=modules \
+    --define extension_dir=%{extname}-%{version}/modules \
     --define extension=%{extname}.so \
     --modules | grep %{extname}
 
+%{_bindir}/zts-php --no-php-ini \
+    --define extension_dir=%{extname}-%{version}-zts/modules \
+    --define extension=%{extname}.so \
+    --modules | grep %{extname}
+
+cd %{extname}-%{version}
 %if %{withapc}
 # APC required for test 045
 ln -s %{php_extdir}/apc.so modules/
@@ -177,14 +195,24 @@ fi
 %config(noreplace) %{_sysconfdir}/php.d/%{extname}.ini
 %{php_extdir}/%{extname}.so
 %{pecl_xmldir}/%{name}.xml
+%if 0%{?__ztsphp:1}
+%{php_ztsextdir}/%{extname}.so
+%config(noreplace) %{php_ztsinidir}/%{extname}.ini
+%endif
 
 
 %files devel
 %defattr(-,root,root,-)
 %{_includedir}/php/ext/%{extname}
+%if 0%{?__ztsphp:1}
+%{php_ztsincldir}/ext/%{extname}
+%endif
 
 
 %changelog
+* Mon Apr 23 2012 Collet <remi@fedoraproject.org> - 1.1.2-0.2.git3b8ab7e
+- enable ZTS extension
+
 * Fri Jan 20 2012 Collet <remi@fedoraproject.org> - 1.1.2-0.1.git3b8ab7e
 - update to git snapshot for php 5.4
 
