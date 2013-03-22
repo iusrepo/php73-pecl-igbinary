@@ -16,8 +16,8 @@ Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        1.1.2
 %if 0%{?gitver:1}
-Release:	0.4.git%{gitver}%{?dist}
-Source0:	igbinary-igbinary-1.1.1-15-g3b8ab7e.tar.gz
+Release:        0.5.git%{gitver}%{?dist}
+Source0:        igbinary-igbinary-1.1.1-15-g3b8ab7e.tar.gz
 %else
 Release:        3%{?dist}
 Source0:        http://pecl.php.net/get/%{extname}-%{version}.tgz
@@ -210,6 +210,9 @@ fi
 
 
 %changelog
+* Fri Mar 22 2013 Remi Collet <rcollet@redhat.com> - 1.1.2-0.5.git3b8ab7e
+- rebuild for http://fedoraproject.org/wiki/Features/Php55
+
 * Thu Feb 14 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.2-0.4.git3b8ab7e
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
 
