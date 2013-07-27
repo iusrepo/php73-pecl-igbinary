@@ -1,27 +1,31 @@
-%{!?__pecl: %{expand: %%global __pecl %{_bindir}/pecl}}
-%{!?php_extdir: %{expand: %%global php_extdir %(php-config --extension-dir)}}
+# spec file for php-pecl-igbinary
+#
+# Copyright (c) 2010-2013 Remi Collet
+# License: CC-BY-SA
+# http://creativecommons.org/licenses/by-sa/3.0/
+#
+# Please, preserve the changelog entries
+#
+%{!?php_inidir:  %{expand: %%global php_inidir  %{_sysconfdir}/php.d}}
+%{!?php_incldir: %{expand: %%global php_incldir %{_includedir}/php}}
+%{!?__pecl:      %{expand: %%global __pecl      %{_bindir}/pecl}}
 
 %global extname   igbinary
-%global gitver    3b8ab7e
+%global with_zts  0%{?__ztsphp:1}
+%global commit    c35d48f3d14794373b2ef89a6d79020bb7418d7f
+%global short     %(c=%{commit}; echo ${c:0:7})
 %global prever    -dev
-
-%if 0%{?fedora} >= 14
-%global withapc 1
-%else
-# EL-6 only provides 3.1.3pl1
-%global withapc 0
-%endif
 
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        1.1.2
-%if 0%{?gitver:1}
-Release:        0.5.git%{gitver}%{?dist}
-Source0:        igbinary-igbinary-1.1.1-15-g3b8ab7e.tar.gz
+%if 0%{?short:1}
+Release:        0.6.git%{short}%{?dist}
+Source0:        https://github.com/%{extname}/%{extname}/archive/%{commit}/%{extname}-%{version}-%{short}.tar.gz
 %else
-Release:        3%{?dist}
+Release:        2%{?dist}
 Source0:        http://pecl.php.net/get/%{extname}-%{version}.tgz
-# https://bugs.php.net/59668
+# http://pecl.php.net/bugs/22598
 Source1:        %{extname}-tests.tgz
 %endif
 # https://bugs.php.net/59669
@@ -30,28 +34,27 @@ Group:          System Environment/Libraries
 
 URL:            http://pecl.php.net/package/igbinary
 
-# https://bugs.php.net/60298
-Patch0:         igbinary-php54.patch
+# https://github.com/igbinary/igbinary/pull/24
+Patch0:         igbinary-apcu.patch
 
-BuildRoot:      %{_tmppath}/%{name}-%{version}-root-%(%{__id_u} -n)
-BuildRequires:  php-devel >= 5.2.0
-%if %{withapc}
-BuildRequires:  php-pecl-apc-devel >= 3.1.7
-%else
 BuildRequires:  php-pear
-%endif
+BuildRequires:  php-devel >= 5.2.0
+# php-pecl-apcu-devel provides php-pecl-apc-devel
+BuildRequires:  php-pecl-apc-devel >= 3.1.7
 
 Requires(post): %{__pecl}
 Requires(postun): %{__pecl}
 Requires:       php(zend-abi) = %{php_zend_api}
 Requires:       php(api) = %{php_core_api}
-Provides:       php-pecl(%{extname}) = %{version}
 
-# RPM 4.8
+Provides:       php-%{extname} = %{version}
+Provides:       php-%{extname}%{?_isa} = %{version}
+Provides:       php-pecl(%{extname}) = %{version}
+Provides:       php-pecl(%{extname})%{?_isa} = %{version}
+
+# Filter private shared
 %{?filter_provides_in: %filter_provides_in %{_libdir}/.*\.so$}
 %{?filter_setup}
-# RPM 4.9
-%global __provides_exclude_from %{?__provides_exclude_from:%__provides_exclude_from|}%{_libdir}/.*\\.so$
 
 
 %description
@@ -67,7 +70,7 @@ based storages for serialized data.
 Summary:       Igbinary developer files (header)
 Group:         Development/Libraries
 Requires:      php-pecl-%{extname}%{?_isa} = %{version}-%{release}
-Requires:      php-devel
+Requires:      php-devel%{?_isa}
 
 %description devel
 These are the files needed to compile programs using Igbinary
@@ -76,16 +79,18 @@ These are the files needed to compile programs using Igbinary
 %prep
 %setup -q -c
 
-%if 0%{?gitver:1}
-mv igbinary-igbinary-%{gitver}/package.xml .
-mv igbinary-igbinary-%{gitver} %{extname}-%{version}
+%if 0%{?short:1}
+mv igbinary-%{commit}/package.xml .
+mv igbinary-%{commit} %{extname}-%{version}
+sed -e '/release/s/-dev/dev/' -i package.xml
+
 cd %{extname}-%{version}
-%patch0 -p0 -b .php54
+
+%patch0 -p1 -b .apcu
 
 %else
 cd %{extname}-%{version}
 tar xzf %{SOURCE1}
-
 %endif
 
 # Check version
@@ -95,6 +100,10 @@ if test "x${extver}" != "x%{version}%{?prever}"; then
    exit 1
 fi
 cd ..
+
+%if %{with_zts}
+cp -r %{extname}-%{version} %{extname}-%{version}-zts
+%endif
 
 cat <<EOF | tee %{extname}.ini
 ; Enable %{extname} extension module
@@ -107,13 +116,9 @@ extension=%{extname}.so
 ; Use igbinary as session serializer
 ;session.serialize_handler=igbinary
 
-%if %{withapc}
 ; Use igbinary as APC serializer
 ;apc.serializer=igbinary
-%endif
 EOF
-
-cp -r %{extname}-%{version} %{extname}-%{version}-zts
 
 
 %build
@@ -122,7 +127,7 @@ cd %{extname}-%{version}
 %configure --with-php-config=%{_bindir}/php-config
 make %{?_smp_mflags}
 
-%if 0%{?__ztsphp:1}
+%if %{with_zts}
 cd ../%{extname}-%{version}-zts
 %{_bindir}/zts-phpize
 %configure --with-php-config=%{_bindir}/zts-php-config
@@ -131,17 +136,18 @@ make %{?_smp_mflags}
 
 
 %install
-rm -rf %{buildroot}
+# for short circuit
+rm -f  %{extname}*/modules/apc.so
 
 make install -C %{extname}-%{version} \
      INSTALL_ROOT=%{buildroot}
 
 install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
 
-install -D -m 644 %{extname}.ini %{buildroot}%{_sysconfdir}/php.d/%{extname}.ini
+install -D -m 644 %{extname}.ini %{buildroot}%{php_inidir}/%{extname}.ini
 
 # Install the ZTS stuff
-%if 0%{?__ztsphp:1}
+%if %{with_zts}
 make install -C %{extname}-%{version}-zts \
      INSTALL_ROOT=%{buildroot}
 install -D -m 644 %{extname}.ini %{buildroot}%{php_ztsinidir}/%{extname}.ini
@@ -149,31 +155,48 @@ install -D -m 644 %{extname}.ini %{buildroot}%{php_ztsinidir}/%{extname}.ini
 
 
 %check
-# simple module load test
-# without APC to ensure than can run without
-%{_bindir}/php --no-php-ini \
-    --define extension_dir=%{extname}-%{version}/modules \
-    --define extension=%{extname}.so \
-    --modules | grep %{extname}
-
-%{_bindir}/zts-php --no-php-ini \
-    --define extension_dir=%{extname}-%{version}-zts/modules \
-    --define extension=%{extname}.so \
-    --modules | grep %{extname}
-
 cd %{extname}-%{version}
-%if %{withapc}
+
 # APC required for test 045
-ln -s %{php_extdir}/apc.so modules/
+if [ -f %{php_extdir}/apcu.so ]; then
+  ln -s %{php_extdir}/apcu.so modules/apc.so
+elif [ -f %{php_extdir}/apc.so ]; then
+  ln   -s %{php_extdir}/apc.so modules/apc.so
+fi
+
+: simple NTS module load test, without APC, as optional
+%{_bindir}/php --no-php-ini \
+    --define extension_dir=modules \
+    --define extension=%{extname}.so \
+    --modules | grep %{extname}
+
+: upstream test suite
+TEST_PHP_EXECUTABLE=%{_bindir}/php \
+TEST_PHP_ARGS="-n -d extension_dir=$PWD/modules -d extension=apc.so -d extension=%{extname}.so" \
+NO_INTERACTION=1 \
+REPORT_EXIT_STATUS=1 \
+%{_bindir}/php -n run-tests.php
+
+%if %{with_zts}
+cd ../%{extname}-%{version}-zts
+if [ -f %{php_ztsextdir}/apcu.so ]; then
+  ln -s %{php_ztsextdir}/apcu.so modules/apc.so
+elif [ -f %{php_ztsextdir}/apc.so ]; then
+  ln   -s %{php_ztsextdir}/apc.so modules/apc.so
+fi
+: simple ZTS module load test, without APC, as optional
+%{__ztsphp} --no-php-ini \
+    --define extension_dir=modules \
+    --define extension=%{extname}.so \
+    --modules | grep %{extname}
+
+: upstream test suite
+TEST_PHP_EXECUTABLE=%{__ztsphp} \
+TEST_PHP_ARGS="-n -d extension_dir=$PWD/modules -d extension=apc.so -d extension=%{extname}.so" \
+NO_INTERACTION=1 \
+REPORT_EXIT_STATUS=1 \
+%{__ztsphp} -n run-tests.php
 %endif
-
-NO_INTERACTION=1 make test | tee rpmtests.log
-# https://bugs.php.net/60298
-# grep -q "FAILED TEST" rpmtests.log && exit 1
-
-
-%clean
-rm -rf %{buildroot}
 
 
 %post
@@ -187,29 +210,35 @@ fi
 
 
 %files
-%defattr(-,root,root,-)
 %doc %{extname}-%{version}/COPYING
 %doc %{extname}-%{version}/CREDITS
+%doc %{extname}-%{version}/ChangeLog
 %doc %{extname}-%{version}/NEWS
 %doc %{extname}-%{version}/README
-%config(noreplace) %{_sysconfdir}/php.d/%{extname}.ini
+%config(noreplace) %{php_inidir}/%{extname}.ini
 %{php_extdir}/%{extname}.so
 %{pecl_xmldir}/%{name}.xml
-%if 0%{?__ztsphp:1}
-%{php_ztsextdir}/%{extname}.so
+
+%if %{with_zts}
 %config(noreplace) %{php_ztsinidir}/%{extname}.ini
+%{php_ztsextdir}/%{extname}.so
 %endif
 
 
 %files devel
-%defattr(-,root,root,-)
-%{_includedir}/php/ext/%{extname}
-%if 0%{?__ztsphp:1}
+%{php_incldir}/ext/%{extname}
+
+%if %{with_zts}
 %{php_ztsincldir}/ext/%{extname}
 %endif
 
 
 %changelog
+* Sat Jul 27 2013 Remi Collet <remi@fedoraproject.org> - 1.1.2-0.6.git3b8ab7e
+- latest snapshot
+- fix build with APCu
+- spec cleanups
+
 * Fri Mar 22 2013 Remi Collet <rcollet@redhat.com> - 1.1.2-0.5.git3b8ab7e
 - rebuild for http://fedoraproject.org/wiki/Features/Php55
 
