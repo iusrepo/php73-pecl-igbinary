@@ -6,6 +6,11 @@
 #
 # Please, preserve the changelog entries
 #
+%if 0%{?scl:1}
+%scl_package php-pecl-igbinary
+%else
+%global pkg_name %{name}
+%endif
 %{!?php_inidir:  %{expand: %%global php_inidir  %{_sysconfdir}/php.d}}
 %{!?php_incldir: %{expand: %%global php_incldir %{_includedir}/php}}
 %{!?__pecl:      %{expand: %%global __pecl      %{_bindir}/pecl}}
@@ -17,10 +22,10 @@
 %global prever    -dev
 
 Summary:        Replacement for the standard PHP serializer
-Name:           php-pecl-igbinary
+Name:           %{?scl_prefix}php-pecl-igbinary
 Version:        1.1.2
 %if 0%{?short:1}
-Release:        0.6.git%{short}%{?dist}
+Release:        0.7.git%{short}%{?dist}
 Source0:        https://github.com/%{extname}/%{extname}/archive/%{commit}/%{extname}-%{version}-%{short}.tar.gz
 %else
 Release:        2%{?dist}
@@ -37,20 +42,21 @@ URL:            http://pecl.php.net/package/igbinary
 # https://github.com/igbinary/igbinary/pull/24
 Patch0:         igbinary-apcu.patch
 
-BuildRequires:  php-pear
-BuildRequires:  php-devel >= 5.2.0
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRequires:  %{?scl_prefix}php-pear
+BuildRequires:  %{?scl_prefix}php-devel >= 5.2.0
 # php-pecl-apcu-devel provides php-pecl-apc-devel
-BuildRequires:  php-pecl-apc-devel >= 3.1.7
+BuildRequires:  %{?scl_prefix}php-pecl-apc-devel >= 3.1.7
 
 Requires(post): %{__pecl}
 Requires(postun): %{__pecl}
-Requires:       php(zend-abi) = %{php_zend_api}
-Requires:       php(api) = %{php_core_api}
+Requires:       %{?scl_prefix}php(zend-abi) = %{php_zend_api}
+Requires:       %{?scl_prefix}php(api) = %{php_core_api}
 
-Provides:       php-%{extname} = %{version}
-Provides:       php-%{extname}%{?_isa} = %{version}
-Provides:       php-pecl(%{extname}) = %{version}
-Provides:       php-pecl(%{extname})%{?_isa} = %{version}
+Provides:       %{?scl_prefix}php-%{extname} = %{version}
+Provides:       %{?scl_prefix}php-%{extname}%{?_isa} = %{version}
+Provides:       %{?scl_prefix}php-pecl(%{extname}) = %{version}
+Provides:       %{?scl_prefix}php-pecl(%{extname})%{?_isa} = %{version}
 
 # Filter private shared
 %{?filter_provides_in: %filter_provides_in %{_libdir}/.*\.so$}
@@ -210,6 +216,7 @@ fi
 
 
 %files
+%defattr(-,root,root,-)
 %doc %{extname}-%{version}/COPYING
 %doc %{extname}-%{version}/CREDITS
 %doc %{extname}-%{version}/ChangeLog
@@ -226,6 +233,7 @@ fi
 
 
 %files devel
+%defattr(-,root,root,-)
 %{php_incldir}/ext/%{extname}
 
 %if %{with_zts}
@@ -234,7 +242,10 @@ fi
 
 
 %changelog
-* Sat Jul 27 2013 Remi Collet <remi@fedoraproject.org> - 1.1.2-0.6.git3b8ab7e
+* Mon Jul 29 2013 Remi Collet <rcollet@redhat.com> - 1.1.2-0.7.gitc35d48f
+- adapt for scl
+
+* Sat Jul 27 2013 Remi Collet <remi@fedoraproject.org> - 1.1.2-0.6.gitc35d48f
 - latest snapshot
 - fix build with APCu
 - spec cleanups
