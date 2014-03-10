@@ -1,16 +1,11 @@
 # spec file for php-pecl-igbinary
 #
-# Copyright (c) 2010-2013 Remi Collet
+# Copyright (c) 2010-2014 Remi Collet
 # License: CC-BY-SA
 # http://creativecommons.org/licenses/by-sa/3.0/
 #
 # Please, preserve the changelog entries
 #
-%if 0%{?scl:1}
-%scl_package php-pecl-igbinary
-%else
-%global pkg_name %{name}
-%endif
 %{!?php_inidir:  %{expand: %%global php_inidir  %{_sysconfdir}/php.d}}
 %{!?php_incldir: %{expand: %%global php_incldir %{_includedir}/php}}
 %{!?__pecl:      %{expand: %%global __pecl      %{_bindir}/pecl}}
@@ -22,10 +17,10 @@
 %global prever    -dev
 
 Summary:        Replacement for the standard PHP serializer
-Name:           %{?scl_prefix}php-pecl-igbinary
+Name:           php-pecl-igbinary
 Version:        1.1.2
 %if 0%{?short:1}
-Release:        0.7.git%{short}%{?dist}
+Release:        0.8.git%{short}%{?dist}
 Source0:        https://github.com/%{extname}/%{extname}/archive/%{commit}/%{extname}-%{version}-%{short}.tar.gz
 %else
 Release:        2%{?dist}
@@ -42,25 +37,26 @@ URL:            http://pecl.php.net/package/igbinary
 # https://github.com/igbinary/igbinary/pull/24
 Patch0:         igbinary-apcu.patch
 
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  %{?scl_prefix}php-pear
-BuildRequires:  %{?scl_prefix}php-devel >= 5.2.0
+BuildRequires:  php-pear
+BuildRequires:  php-devel >= 5.2.0
 # php-pecl-apcu-devel provides php-pecl-apc-devel
-BuildRequires:  %{?scl_prefix}php-pecl-apc-devel >= 3.1.7
+BuildRequires:  php-pecl-apc-devel >= 3.1.7
 
 Requires(post): %{__pecl}
 Requires(postun): %{__pecl}
-Requires:       %{?scl_prefix}php(zend-abi) = %{php_zend_api}
-Requires:       %{?scl_prefix}php(api) = %{php_core_api}
+Requires:       php(zend-abi) = %{php_zend_api}
+Requires:       php(api) = %{php_core_api}
 
-Provides:       %{?scl_prefix}php-%{extname} = %{version}
-Provides:       %{?scl_prefix}php-%{extname}%{?_isa} = %{version}
-Provides:       %{?scl_prefix}php-pecl(%{extname}) = %{version}
-Provides:       %{?scl_prefix}php-pecl(%{extname})%{?_isa} = %{version}
+Provides:       php-%{extname} = %{version}
+Provides:       php-%{extname}%{?_isa} = %{version}
+Provides:       php-pecl(%{extname}) = %{version}
+Provides:       php-pecl(%{extname})%{?_isa} = %{version}
 
-# Filter private shared
+%if 0%{?fedora} < 20
+# Filter shared private
 %{?filter_provides_in: %filter_provides_in %{_libdir}/.*\.so$}
 %{?filter_setup}
+%endif
 
 
 %description
@@ -142,9 +138,6 @@ make %{?_smp_mflags}
 
 
 %install
-# for short circuit
-rm -f  %{extname}*/modules/apc.so
-
 make install -C %{extname}-%{version} \
      INSTALL_ROOT=%{buildroot}
 
@@ -159,46 +152,49 @@ make install -C %{extname}-%{version}-zts \
 install -D -m 644 %{extname}.ini %{buildroot}%{php_ztsinidir}/%{extname}.ini
 %endif
 
+# Test & Documentation
+cd %{extname}-%{version}
+for i in $(grep 'role="test"' ../package.xml | sed -e 's/^.*name="//;s/".*$//')
+do [ -f tests/$i ] && install -Dpm 644 tests/$i %{buildroot}%{pecl_testdir}/%{extname}/tests/$i
+done
+for i in $(grep 'role="doc"' ../package.xml | sed -e 's/^.*name="//;s/".*$//')
+do install -Dpm 644 $i %{buildroot}%{pecl_docdir}/%{extname}/$i
+done
+
 
 %check
 cd %{extname}-%{version}
 
 # APC required for test 045
 if [ -f %{php_extdir}/apcu.so ]; then
-  ln -s %{php_extdir}/apcu.so modules/apc.so
+  MOD="-d extension=apcu.so"
 elif [ -f %{php_extdir}/apc.so ]; then
-  ln   -s %{php_extdir}/apc.so modules/apc.so
+  MOD="-d extension=apc.so"
 fi
 
 : simple NTS module load test, without APC, as optional
 %{_bindir}/php --no-php-ini \
-    --define extension_dir=modules \
-    --define extension=%{extname}.so \
+    --define extension=%{buildroot}%{php_extdir}/%{extname}.so \
     --modules | grep %{extname}
 
 : upstream test suite
 TEST_PHP_EXECUTABLE=%{_bindir}/php \
-TEST_PHP_ARGS="-n -d extension_dir=$PWD/modules -d extension=apc.so -d extension=%{extname}.so" \
+TEST_PHP_ARGS="-n $MOD -d extension=$PWD/modules/%{extname}.so" \
 NO_INTERACTION=1 \
 REPORT_EXIT_STATUS=1 \
 %{_bindir}/php -n run-tests.php
 
 %if %{with_zts}
 cd ../%{extname}-%{version}-zts
-if [ -f %{php_ztsextdir}/apcu.so ]; then
-  ln -s %{php_ztsextdir}/apcu.so modules/apc.so
-elif [ -f %{php_ztsextdir}/apc.so ]; then
-  ln   -s %{php_ztsextdir}/apc.so modules/apc.so
-fi
+
 : simple ZTS module load test, without APC, as optional
 %{__ztsphp} --no-php-ini \
-    --define extension_dir=modules \
-    --define extension=%{extname}.so \
+    --define extension=%{buildroot}%{php_ztsextdir}/%{extname}.so \
     --modules | grep %{extname}
 
 : upstream test suite
 TEST_PHP_EXECUTABLE=%{__ztsphp} \
-TEST_PHP_ARGS="-n -d extension_dir=$PWD/modules -d extension=apc.so -d extension=%{extname}.so" \
+TEST_PHP_ARGS="-n $MOD -d extension=$PWD/modules/%{extname}.so" \
 NO_INTERACTION=1 \
 REPORT_EXIT_STATUS=1 \
 %{__ztsphp} -n run-tests.php
@@ -216,12 +212,7 @@ fi
 
 
 %files
-%defattr(-,root,root,-)
-%doc %{extname}-%{version}/COPYING
-%doc %{extname}-%{version}/CREDITS
-%doc %{extname}-%{version}/ChangeLog
-%doc %{extname}-%{version}/NEWS
-%doc %{extname}-%{version}/README
+%doc %{pecl_docdir}/%{extname}
 %config(noreplace) %{php_inidir}/%{extname}.ini
 %{php_extdir}/%{extname}.so
 %{pecl_xmldir}/%{name}.xml
@@ -233,7 +224,7 @@ fi
 
 
 %files devel
-%defattr(-,root,root,-)
+%doc %{pecl_testdir}/%{extname}
 %{php_incldir}/ext/%{extname}
 
 %if %{with_zts}
@@ -242,6 +233,11 @@ fi
 
 
 %changelog
+* Mon Mar 10 2014 Remi Collet <rcollet@redhat.com> - 1.1.2-0.8.gitc35d48f
+- cleanups and drop SCL support
+- install doc in pecl_docdir
+- install tests in pecl_testdir (devel)
+
 * Mon Jul 29 2013 Remi Collet <rcollet@redhat.com> - 1.1.2-0.7.gitc35d48f
 - adapt for scl
 
