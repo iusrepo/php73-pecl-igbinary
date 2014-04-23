@@ -15,12 +15,17 @@
 %global commit    c35d48f3d14794373b2ef89a6d79020bb7418d7f
 %global short     %(c=%{commit}; echo ${c:0:7})
 %global prever    -dev
+%if 0%{?fedora} < 21
+%global ini_name  %{extname}.ini
+%else
+%global ini_name  40-%{extname}.ini
+%endif
 
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        1.1.2
 %if 0%{?short:1}
-Release:        0.8.git%{short}%{?dist}
+Release:        0.9.git%{short}%{?dist}
 Source0:        https://github.com/%{extname}/%{extname}/archive/%{commit}/%{extname}-%{version}-%{short}.tar.gz
 %else
 Release:        2%{?dist}
@@ -107,7 +112,7 @@ cd ..
 cp -r %{extname}-%{version} %{extname}-%{version}-zts
 %endif
 
-cat <<EOF | tee %{extname}.ini
+cat <<EOF | tee %{ini_name}
 ; Enable %{extname} extension module
 extension=%{extname}.so
 
@@ -143,13 +148,13 @@ make install -C %{extname}-%{version} \
 
 install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
 
-install -D -m 644 %{extname}.ini %{buildroot}%{php_inidir}/%{extname}.ini
+install -D -m 644 %{ini_name} %{buildroot}%{php_inidir}/%{ini_name}
 
 # Install the ZTS stuff
 %if %{with_zts}
 make install -C %{extname}-%{version}-zts \
      INSTALL_ROOT=%{buildroot}
-install -D -m 644 %{extname}.ini %{buildroot}%{php_ztsinidir}/%{extname}.ini
+install -D -m 644 %{ini_name} %{buildroot}%{php_ztsinidir}/%{ini_name}
 %endif
 
 # Test & Documentation
@@ -213,12 +218,12 @@ fi
 
 %files
 %doc %{pecl_docdir}/%{extname}
-%config(noreplace) %{php_inidir}/%{extname}.ini
+%config(noreplace) %{php_inidir}/%{ini_name}
 %{php_extdir}/%{extname}.so
 %{pecl_xmldir}/%{name}.xml
 
 %if %{with_zts}
-%config(noreplace) %{php_ztsinidir}/%{extname}.ini
+%config(noreplace) %{php_ztsinidir}/%{ini_name}
 %{php_ztsextdir}/%{extname}.so
 %endif
 
@@ -233,6 +238,9 @@ fi
 
 
 %changelog
+* Wed Apr 23 2014 Remi Collet <rcollet@redhat.com> - 1.1.2-0.9.gitc35d48f
+- add numerical prefix to extension configuration file
+
 * Mon Mar 10 2014 Remi Collet <rcollet@redhat.com> - 1.1.2-0.8.gitc35d48f
 - cleanups and drop SCL support
 - install doc in pecl_docdir
