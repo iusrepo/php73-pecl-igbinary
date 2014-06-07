@@ -25,10 +25,10 @@ Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        1.1.2
 %if 0%{?short:1}
-Release:        0.9.git%{short}%{?dist}
+Release:        0.10.git%{short}%{?dist}
 Source0:        https://github.com/%{extname}/%{extname}/archive/%{commit}/%{extname}-%{version}-%{short}.tar.gz
 %else
-Release:        2%{?dist}
+Release:        3%{?dist}
 Source0:        http://pecl.php.net/get/%{extname}-%{version}.tgz
 # http://pecl.php.net/bugs/22598
 Source1:        %{extname}-tests.tgz
@@ -238,6 +238,9 @@ fi
 
 
 %changelog
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.2-0.10.gitc35d48f
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
 * Wed Apr 23 2014 Remi Collet <rcollet@redhat.com> - 1.1.2-0.9.gitc35d48f
 - add numerical prefix to extension configuration file
 
