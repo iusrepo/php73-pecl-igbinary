@@ -15,7 +15,7 @@
 %global commit    c35d48f3d14794373b2ef89a6d79020bb7418d7f
 %global short     %(c=%{commit}; echo ${c:0:7})
 %global prever    -dev
-%if 0%{?fedora} < 21
+%if "%{php_version}" < "5.6"
 %global ini_name  %{extname}.ini
 %else
 %global ini_name  40-%{extname}.ini
@@ -25,7 +25,7 @@ Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        1.1.2
 %if 0%{?short:1}
-Release:        0.10.git%{short}%{?dist}
+Release:        0.11.git%{short}%{?dist}
 Source0:        https://github.com/%{extname}/%{extname}/archive/%{commit}/%{extname}-%{version}-%{short}.tar.gz
 %else
 Release:        3%{?dist}
@@ -238,6 +238,9 @@ fi
 
 
 %changelog
+* Thu Jun 19 2014 Remi Collet <rcollet@redhat.com> - 1.1.2-0.11.gitc35d48f
+- rebuild for https://fedoraproject.org/wiki/Changes/Php56
+
 * Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.2-0.10.gitc35d48f
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
 
