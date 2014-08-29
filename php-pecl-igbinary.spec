@@ -6,15 +6,12 @@
 #
 # Please, preserve the changelog entries
 #
-%{!?php_inidir:  %{expand: %%global php_inidir  %{_sysconfdir}/php.d}}
-%{!?php_incldir: %{expand: %%global php_incldir %{_includedir}/php}}
-%{!?__pecl:      %{expand: %%global __pecl      %{_bindir}/pecl}}
+%{!?php_inidir:  %global php_inidir  %{_sysconfdir}/php.d}
+%{!?__pecl:      %global __pecl      %{_bindir}/pecl}
+%{!?__php:       %global __php       %{_bindir}/php}
 
 %global extname   igbinary
 %global with_zts  0%{?__ztsphp:1}
-%global commit    c35d48f3d14794373b2ef89a6d79020bb7418d7f
-%global short     %(c=%{commit}; echo ${c:0:7})
-%global prever    -dev
 %if "%{php_version}" < "5.6"
 %global ini_name  %{extname}.ini
 %else
@@ -23,24 +20,13 @@
 
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
-Version:        1.1.2
-%if 0%{?short:1}
-Release:        0.12.git%{short}%{?dist}
-Source0:        https://github.com/%{extname}/%{extname}/archive/%{commit}/%{extname}-%{version}-%{short}.tar.gz
-%else
-Release:        3%{?dist}
+Version:        1.2.0
+Release:        1%{?dist}
 Source0:        http://pecl.php.net/get/%{extname}-%{version}.tgz
-# http://pecl.php.net/bugs/22598
-Source1:        %{extname}-tests.tgz
-%endif
-# https://bugs.php.net/59669
 License:        BSD
 Group:          System Environment/Libraries
 
 URL:            http://pecl.php.net/package/igbinary
-
-# https://github.com/igbinary/igbinary/pull/24
-Patch0:         igbinary-apcu.patch
 
 BuildRequires:  php-pear
 BuildRequires:  php-devel >= 5.2.0
@@ -57,7 +43,7 @@ Provides:       php-%{extname}%{?_isa} = %{version}
 Provides:       php-pecl(%{extname}) = %{version}
 Provides:       php-pecl(%{extname})%{?_isa} = %{version}
 
-%if 0%{?fedora} < 20
+%if 0%{?fedora} < 20 && 0%{?rhel} < 7
 # Filter shared private
 %{?filter_provides_in: %filter_provides_in %{_libdir}/.*\.so$}
 %{?filter_setup}
@@ -86,21 +72,12 @@ These are the files needed to compile programs using Igbinary
 %prep
 %setup -q -c
 
-%if 0%{?short:1}
-mv igbinary-%{commit}/package.xml .
-mv igbinary-%{commit} %{extname}-%{version}
-sed -e '/release/s/-dev/dev/' -i package.xml
-
-cd %{extname}-%{version}
-
-%patch0 -p1 -b .apcu
-
-%else
-cd %{extname}-%{version}
-tar xzf %{SOURCE1}
-%endif
+mv %{extname}-%{version} NTS
+cd NTS
 
 # Check version
+sed -e '/IGBINARY_VERSION/s/1.1.2-dev/%{version}/' -i igbinary.h
+
 extver=$(sed -n '/#define IGBINARY_VERSION/{s/.* "//;s/".*$//;p}' igbinary.h)
 if test "x${extver}" != "x%{version}%{?prever}"; then
    : Error: Upstream version is ${extver}, expecting %{version}%{?prever}.
@@ -109,7 +86,7 @@ fi
 cd ..
 
 %if %{with_zts}
-cp -r %{extname}-%{version} %{extname}-%{version}-zts
+cp -r NTS ZTS
 %endif
 
 cat <<EOF | tee %{ini_name}
@@ -129,13 +106,13 @@ EOF
 
 
 %build
-cd %{extname}-%{version}
+cd NTS
 %{_bindir}/phpize
 %configure --with-php-config=%{_bindir}/php-config
 make %{?_smp_mflags}
 
 %if %{with_zts}
-cd ../%{extname}-%{version}-zts
+cd ../ZTS
 %{_bindir}/zts-phpize
 %configure --with-php-config=%{_bindir}/zts-php-config
 make %{?_smp_mflags}
@@ -143,32 +120,36 @@ make %{?_smp_mflags}
 
 
 %install
-make install -C %{extname}-%{version} \
-     INSTALL_ROOT=%{buildroot}
+make install -C NTS INSTALL_ROOT=%{buildroot}
 
-install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
+install -D -m 644 package2.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
 
 install -D -m 644 %{ini_name} %{buildroot}%{php_inidir}/%{ini_name}
 
 # Install the ZTS stuff
 %if %{with_zts}
-make install -C %{extname}-%{version}-zts \
-     INSTALL_ROOT=%{buildroot}
+make install -C ZTS INSTALL_ROOT=%{buildroot}
 install -D -m 644 %{ini_name} %{buildroot}%{php_ztsinidir}/%{ini_name}
 %endif
 
 # Test & Documentation
-cd %{extname}-%{version}
-for i in $(grep 'role="test"' ../package.xml | sed -e 's/^.*name="//;s/".*$//')
-do [ -f tests/$i ] && install -Dpm 644 tests/$i %{buildroot}%{pecl_testdir}/%{extname}/tests/$i
+cd NTS
+for i in $(grep 'role="test"' ../package2.xml | sed -e 's/^.*name="//;s/".*$//')
+do install -Dpm 644 $i %{buildroot}%{pecl_testdir}/%{extname}/tests/$i
 done
-for i in $(grep 'role="doc"' ../package.xml | sed -e 's/^.*name="//;s/".*$//')
+for i in $(grep 'role="doc"' ../package2.xml | sed -e 's/^.*name="//;s/".*$//')
 do install -Dpm 644 $i %{buildroot}%{pecl_docdir}/%{extname}/$i
 done
 
 
 %check
-cd %{extname}-%{version}
+sed -e '/^extension=apc/d' -i ?TS/tests/igbinary_045*phpt
+%if "%{php_version}" < "5.4"
+# SessionHandlerInterface is 5.4 only
+rm ?TS/tests/igbinary_047.phpt
+%endif
+
+cd NTS
 
 # APC required for test 045
 if [ -f %{php_extdir}/apcu.so ]; then
@@ -187,10 +168,10 @@ TEST_PHP_EXECUTABLE=%{_bindir}/php \
 TEST_PHP_ARGS="-n $MOD -d extension=$PWD/modules/%{extname}.so" \
 NO_INTERACTION=1 \
 REPORT_EXIT_STATUS=1 \
-%{_bindir}/php -n run-tests.php
+%{_bindir}/php -n run-tests.php --show-diff
 
 %if %{with_zts}
-cd ../%{extname}-%{version}-zts
+cd ../ZTS
 
 : simple ZTS module load test, without APC, as optional
 %{__ztsphp} --no-php-ini \
@@ -202,7 +183,7 @@ TEST_PHP_EXECUTABLE=%{__ztsphp} \
 TEST_PHP_ARGS="-n $MOD -d extension=$PWD/modules/%{extname}.so" \
 NO_INTERACTION=1 \
 REPORT_EXIT_STATUS=1 \
-%{__ztsphp} -n run-tests.php
+%{__ztsphp} -n run-tests.php --show-diff
 %endif
 
 
@@ -238,6 +219,10 @@ fi
 
 
 %changelog
+* Thu Aug 28 2014 Remi Collet <remi@fedoraproject.org> - 1.2.0-1
+- update to 1.2.0
+- open https://github.com/igbinary/igbinary/pull/36
+
 * Sun Aug 17 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.2-0.12.gitc35d48f
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
 
