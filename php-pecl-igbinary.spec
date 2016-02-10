@@ -1,27 +1,19 @@
-# spec file for php-pecl-igbinary
+# Fedora spec file for php-pecl-igbinary
 #
-# Copyright (c) 2010-2014 Remi Collet
+# Copyright (c) 2010-2016 Remi Collet
 # License: CC-BY-SA
 # http://creativecommons.org/licenses/by-sa/3.0/
 #
 # Please, preserve the changelog entries
 #
-%{!?php_inidir:  %global php_inidir  %{_sysconfdir}/php.d}
-%{!?__pecl:      %global __pecl      %{_bindir}/pecl}
-%{!?__php:       %global __php       %{_bindir}/php}
-
 %global extname   igbinary
 %global with_zts  0%{?__ztsphp:1}
-%if "%{php_version}" < "5.6"
-%global ini_name  %{extname}.ini
-%else
 %global ini_name  40-%{extname}.ini
-%endif
 
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        1.2.1
-Release:        3%{?dist}
+Release:        4%{?dist}
 Source0:        http://pecl.php.net/get/%{extname}-%{version}.tgz
 License:        BSD
 Group:          System Environment/Libraries
@@ -30,11 +22,8 @@ URL:            http://pecl.php.net/package/igbinary
 
 BuildRequires:  php-pear
 BuildRequires:  php-devel >= 5.2.0
-# php-pecl-apcu-devel provides php-pecl-apc-devel
-BuildRequires:  php-pecl-apc-devel >= 3.1.7
+BuildRequires:  php-pecl-apcu-devel
 
-Requires(post): %{__pecl}
-Requires(postun): %{__pecl}
 Requires:       php(zend-abi) = %{php_zend_api}
 Requires:       php(api) = %{php_core_api}
 
@@ -42,12 +31,6 @@ Provides:       php-%{extname} = %{version}
 Provides:       php-%{extname}%{?_isa} = %{version}
 Provides:       php-pecl(%{extname}) = %{version}
 Provides:       php-pecl(%{extname})%{?_isa} = %{version}
-
-%if 0%{?fedora} < 20 && 0%{?rhel} < 7
-# Filter shared private
-%{?filter_provides_in: %filter_provides_in %{_libdir}/.*\.so$}
-%{?filter_setup}
-%endif
 
 
 %description
@@ -177,16 +160,6 @@ REPORT_EXIT_STATUS=1 \
 %endif
 
 
-%post
-%{pecl_install} %{pecl_xmldir}/%{name}.xml >/dev/null || :
-
-
-%postun
-if [ $1 -eq 0 ] ; then
-    %{pecl_uninstall} %{extname} >/dev/null || :
-fi
-
-
 %files
 %doc %{pecl_docdir}/%{extname}
 %config(noreplace) %{php_inidir}/%{ini_name}
@@ -209,6 +182,10 @@ fi
 
 
 %changelog
+* Wed Feb 10 2016 Remi Collet <remi@fedoraproject.org> - 1.2.1-4
+- drop scriptlets (replaced by file triggers in php-pear)
+- cleanup
+
 * Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 1.2.1-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
