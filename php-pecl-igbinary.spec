@@ -9,7 +9,7 @@
 %global extname    igbinary
 %global with_zts   0%{?__ztsphp:1}
 %global ini_name   40-%{extname}.ini
-%global gh_commit  2b7c703f0b2ad30b15cd0d85bc6b9e40e7603b13
+%global gh_commit  6a2d5b7ea71489c4d7065dc7746d37cfa80d501c
 %global gh_short   %(c=%{gh_commit}; echo ${c:0:7})
 %global gh_date    20151217
 %global prever    -dev
@@ -18,8 +18,8 @@ Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        1.2.2
 %if 0%{?gh_date}
-Release:        0.1.%{gh_date}git%{gh_short}%{?dist}
-Source0:        https://github.com/%{extname}/%{extname}7/archive/%{gh_commit}/%{extname}-%{version}-%{gh_short}.tar.gz
+Release:        0.2.%{gh_date}git%{gh_short}%{?dist}
+Source0:        https://github.com/%{extname}/%{extname}/archive/%{gh_commit}/%{extname}-%{version}-%{gh_short}.tar.gz
 %else
 Release:        2%{?dist}
 Source0:        http://pecl.php.net/get/%{extname}-%{version}.tgz
@@ -65,7 +65,7 @@ These are the files needed to compile programs using Igbinary
 %setup -q -c
 
 %if 0%{?gh_date}
-mv igbinary7-%{gh_commit} NTS
+mv igbinary-%{gh_commit} NTS
 %{__php} -r '
   $pkg = simplexml_load_file("NTS/package.xml");
   $pkg->date = substr("%{gh_date}",0,4)."-".substr("%{gh_date}",4,2)."-".substr("%{gh_date}",6,2);
@@ -80,7 +80,8 @@ mv %{extname}-%{version} NTS
 cd NTS
 
 # Check version
-extver=$(sed -n '/#define PHP_IGBINARY_VERSION/{s/.* "//;s/".*$//;p}' igbinary.h)
+subdir="php$(%{__php} -r 'echo PHP_MAJOR_VERSION;')"
+extver=$(sed -n '/#define PHP_IGBINARY_VERSION/{s/.* "//;s/".*$//;p}' src/$subdir/igbinary.h)
 if test "x${extver}" != "x%{version}%{?prever}"; then
    : Error: Upstream version is ${extver}, expecting %{version}%{?prever}.
    exit 1
@@ -202,6 +203,10 @@ REPORT_EXIT_STATUS=1 \
 
 
 %changelog
+* Mon Nov 14 2016 Remi Collet <remi@fedoraproject.org> - 1.2.2-0.2.20161018git6a2d5b7
+- refresh with sources from igbinary instead of old closed repo igbinary7
+- rebuild for https://fedoraproject.org/wiki/Changes/php71
+
 * Mon Jun 27 2016 Remi Collet <remi@fedoraproject.org> - 1.2.2-0.1.20151217git2b7c703
 - update to 1.2.2dev for PHP 7
 - ignore test results, 4 failed tests: igbinary_009.phpt, igbinary_014.phpt
