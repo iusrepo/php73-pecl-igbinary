@@ -145,7 +145,7 @@ TEST_PHP_EXECUTABLE=%{_bindir}/php \
 TEST_PHP_ARGS="-n $MOD -d extension=$PWD/modules/%{extname}.so" \
 NO_INTERACTION=1 \
 REPORT_EXIT_STATUS=1 \
-%{_bindir}/php -n run-tests.php --show-diff || : ignore results
+%{_bindir}/php -n run-tests.php --show-diff
 
 %if %{with_zts}
 : simple ZTS module load test, without APC, as optional
@@ -159,7 +159,7 @@ TEST_PHP_EXECUTABLE=%{__ztsphp} \
 TEST_PHP_ARGS="-n $MOD -d extension=$PWD/modules/%{extname}.so" \
 NO_INTERACTION=1 \
 REPORT_EXIT_STATUS=1 \
-%{__ztsphp} -n run-tests.php --show-diff || : ignore results
+%{__ztsphp} -n run-tests.php --show-diff
 %endif
 
 
