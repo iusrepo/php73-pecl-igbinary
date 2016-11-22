@@ -9,21 +9,12 @@
 %global extname    igbinary
 %global with_zts   0%{?__ztsphp:1}
 %global ini_name   40-%{extname}.ini
-%global gh_commit  6a2d5b7ea71489c4d7065dc7746d37cfa80d501c
-%global gh_short   %(c=%{gh_commit}; echo ${c:0:7})
-%global gh_date    20151217
-%global prever    -dev
 
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
-Version:        1.2.2
-%if 0%{?gh_date}
-Release:        0.2.%{gh_date}git%{gh_short}%{?dist}
-Source0:        https://github.com/%{extname}/%{extname}/archive/%{gh_commit}/%{extname}-%{version}-%{gh_short}.tar.gz
-%else
-Release:        2%{?dist}
+Version:        2.0.0
+Release:        1%{?dist}
 Source0:        http://pecl.php.net/get/%{extname}-%{version}.tgz
-%endif
 License:        BSD
 Group:          System Environment/Libraries
 
@@ -63,19 +54,7 @@ These are the files needed to compile programs using Igbinary
 
 %prep
 %setup -q -c
-
-%if 0%{?gh_date}
-mv igbinary-%{gh_commit} NTS
-%{__php} -r '
-  $pkg = simplexml_load_file("NTS/package.xml");
-  $pkg->date = substr("%{gh_date}",0,4)."-".substr("%{gh_date}",4,2)."-".substr("%{gh_date}",6,2);
-  $pkg->version->release = "%{version}dev";
-  $pkg->stability->release = "devel";
-  $pkg->asXML("package.xml");
-'
-%else
 mv %{extname}-%{version} NTS
-%endif
 
 cd NTS
 
@@ -147,6 +126,9 @@ done
 
 
 %check
+# drop extension load from phpt
+sed -e '/^extension=/d' -i ?TS/tests/*phpt
+
 # APC required for test 045
 if [ -f %{php_extdir}/apcu.so ]; then
   MOD="-d extension=apcu.so"
@@ -203,6 +185,9 @@ REPORT_EXIT_STATUS=1 \
 
 
 %changelog
+* Mon Nov 21 2016 Remi Collet <remi@fedoraproject.org> - 2.0.0-1
+- update to 2.0.0
+
 * Mon Nov 14 2016 Remi Collet <remi@fedoraproject.org> - 1.2.2-0.2.20161018git6a2d5b7
 - refresh with sources from igbinary instead of old closed repo igbinary7
 - rebuild for https://fedoraproject.org/wiki/Changes/php71
