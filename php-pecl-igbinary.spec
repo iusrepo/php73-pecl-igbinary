@@ -12,8 +12,8 @@
 
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
-Version:        2.0.1
-Release:        2%{?dist}
+Version:        2.0.3
+Release:        1%{?dist}
 Source0:        http://pecl.php.net/get/%{extname}-%{version}.tgz
 License:        BSD
 Group:          System Environment/Libraries
@@ -185,6 +185,14 @@ REPORT_EXIT_STATUS=1 \
 
 
 %changelog
+* Thu Apr 13 2017 Remi Collet <remi@fedoraproject.org> - 2.0.3-1
+- update to 2.0.3
+- tarball generated from github (not yet available on pecl)
+- add patch "Don't call __wakeup if Serializable::unserialize() was used
+  to build object" from https://github.com/igbinary/igbinary/pull/130
+- add patch "Fix test suite for PHP 7.2"
+  from https://github.com/igbinary/igbinary/pull/131
+
 * Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.1-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
 
