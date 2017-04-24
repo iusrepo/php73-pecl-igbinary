@@ -1,6 +1,6 @@
 # Fedora spec file for php-pecl-igbinary
 #
-# Copyright (c) 2010-2016 Remi Collet
+# Copyright (c) 2010-2017 Remi Collet
 # License: CC-BY-SA
 # http://creativecommons.org/licenses/by-sa/4.0/
 #
@@ -12,7 +12,7 @@
 
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
-Version:        2.0.3
+Version:        2.0.4
 Release:        1%{?dist}
 Source0:        http://pecl.php.net/get/%{extname}-%{version}.tgz
 License:        BSD
@@ -185,6 +185,9 @@ REPORT_EXIT_STATUS=1 \
 
 
 %changelog
+* Mon Apr 24 2017 Remi Collet <remi@remirepo.net> - 2.0.4-1
++- Update to 2.0.4
+
 * Thu Apr 13 2017 Remi Collet <remi@fedoraproject.org> - 2.0.3-1
 - update to 2.0.3
 - tarball generated from github (not yet available on pecl)
