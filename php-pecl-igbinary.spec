@@ -126,6 +126,12 @@ done
 
 
 %check
+%if "%{php_version}" > "7.2"
+# See https://github.com/igbinary/igbinary/pull/131
+rm ?TS/tests/igbinary_019.phpt
+rm ?TS/tests/igbinary_unserialize_v1_compatible.phpt
+%endif
+
 # drop extension load from phpt
 sed -e '/^extension=/d' -i ?TS/tests/*phpt
 
