@@ -6,15 +6,18 @@
 #
 # Please, preserve the changelog entries
 #
-%global extname    igbinary
+%global pecl_name  igbinary
 %global with_zts   0%{?__ztsphp:1}
-%global ini_name   40-%{extname}.ini
+%global ini_name   40-%{pecl_name}.ini
+
+%global upstream_version 2.0.5
+%global upstream_prever  RC1
 
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
-Version:        2.0.4
-Release:        4%{?dist}
-Source0:        http://pecl.php.net/get/%{extname}-%{version}.tgz
+Version:        %{upstream_version}%{?upstream_prever:~%{upstream_prever}}
+Release:        1%{?dist}
+Source0:        http://pecl.php.net/get/%{pecl_name}-%{upstream_version}%{?upstream_prever}.tgz
 License:        BSD
 Group:          System Environment/Libraries
 
@@ -27,10 +30,10 @@ BuildRequires:  php-pecl-apcu-devel
 Requires:       php(zend-abi) = %{php_zend_api}
 Requires:       php(api) = %{php_core_api}
 
-Provides:       php-%{extname} = %{version}
-Provides:       php-%{extname}%{?_isa} = %{version}
-Provides:       php-pecl(%{extname}) = %{version}
-Provides:       php-pecl(%{extname})%{?_isa} = %{version}
+Provides:       php-%{pecl_name} = %{version}
+Provides:       php-%{pecl_name}%{?_isa} = %{version}
+Provides:       php-pecl(%{pecl_name}) = %{version}
+Provides:       php-pecl(%{pecl_name})%{?_isa} = %{version}
 
 
 %description
@@ -45,7 +48,7 @@ based storages for serialized data.
 %package devel
 Summary:       Igbinary developer files (header)
 Group:         Development/Libraries
-Requires:      php-pecl-%{extname}%{?_isa} = %{version}-%{release}
+Requires:      php-pecl-%{pecl_name}%{?_isa} = %{version}-%{release}
 Requires:      php-devel%{?_isa}
 
 %description devel
@@ -54,15 +57,17 @@ These are the files needed to compile programs using Igbinary
 
 %prep
 %setup -q -c
-mv %{extname}-%{version} NTS
+mv %{pecl_name}-%{upstream_version}%{?upstream_prever} NTS
+
+sed -e '/COPYING/s/role="doc"/role="src"/' -i package.xml
 
 cd NTS
 
 # Check version
 subdir="php$(%{__php} -r 'echo PHP_MAJOR_VERSION;')"
 extver=$(sed -n '/#define PHP_IGBINARY_VERSION/{s/.* "//;s/".*$//;p}' src/$subdir/igbinary.h)
-if test "x${extver}" != "x%{version}%{?prever}"; then
-   : Error: Upstream version is ${extver}, expecting %{version}%{?prever}.
+if test "x${extver}" != "x%{upstream_version}%{?upstream_prever}"; then
+   : Error: Upstream version is ${extver}, expecting %{upstream_version}%{?upstream_prever}.
    exit 1
 fi
 cd ..
@@ -72,8 +77,8 @@ cp -r NTS ZTS
 %endif
 
 cat <<EOF | tee %{ini_name}
-; Enable %{extname} extension module
-extension=%{extname}.so
+; Enable %{pecl_name} extension module
+extension=%{pecl_name}.so
 
 ; Enable or disable compacting of duplicate strings
 ; The default is On.
@@ -117,21 +122,15 @@ install -D -m 644 %{ini_name} %{buildroot}%{php_ztsinidir}/%{ini_name}
 # Test & Documentation
 cd NTS
 for i in $(grep 'role="test"' ../package.xml | sed -e 's/^.*name="//;s/".*$//')
-do [ -f $i       ] && install -Dpm 644 $i       %{buildroot}%{pecl_testdir}/%{extname}/$i
-   [ -f tests/$i ] && install -Dpm 644 tests/$i %{buildroot}%{pecl_testdir}/%{extname}/tests/$i
+do [ -f $i       ] && install -Dpm 644 $i       %{buildroot}%{pecl_testdir}/%{pecl_name}/$i
+   [ -f tests/$i ] && install -Dpm 644 tests/$i %{buildroot}%{pecl_testdir}/%{pecl_name}/tests/$i
 done
 for i in $(grep 'role="doc"' ../package.xml | sed -e 's/^.*name="//;s/".*$//')
-do install -Dpm 644 $i %{buildroot}%{pecl_docdir}/%{extname}/$i
+do install -Dpm 644 $i %{buildroot}%{pecl_docdir}/%{pecl_name}/$i
 done
 
 
 %check
-%if "%{php_version}" > "7.2"
-# See https://github.com/igbinary/igbinary/pull/131
-rm ?TS/tests/igbinary_019.phpt
-rm ?TS/tests/igbinary_unserialize_v1_compatible.phpt
-%endif
-
 # drop extension load from phpt
 sed -e '/^extension=/d' -i ?TS/tests/*phpt
 
@@ -142,13 +141,13 @@ fi
 
 : simple NTS module load test, without APC, as optional
 %{_bindir}/php --no-php-ini \
-    --define extension=%{buildroot}%{php_extdir}/%{extname}.so \
-    --modules | grep %{extname}
+    --define extension=%{buildroot}%{php_extdir}/%{pecl_name}.so \
+    --modules | grep %{pecl_name}
 
 : upstream test suite
 cd NTS
 TEST_PHP_EXECUTABLE=%{_bindir}/php \
-TEST_PHP_ARGS="-n $MOD -d extension=$PWD/modules/%{extname}.so" \
+TEST_PHP_ARGS="-n $MOD -d extension=$PWD/modules/%{pecl_name}.so" \
 NO_INTERACTION=1 \
 REPORT_EXIT_STATUS=1 \
 %{_bindir}/php -n run-tests.php --show-diff
@@ -156,13 +155,13 @@ REPORT_EXIT_STATUS=1 \
 %if %{with_zts}
 : simple ZTS module load test, without APC, as optional
 %{__ztsphp} --no-php-ini \
-    --define extension=%{buildroot}%{php_ztsextdir}/%{extname}.so \
-    --modules | grep %{extname}
+    --define extension=%{buildroot}%{php_ztsextdir}/%{pecl_name}.so \
+    --modules | grep %{pecl_name}
 
 : upstream test suite
 cd ../ZTS
 TEST_PHP_EXECUTABLE=%{__ztsphp} \
-TEST_PHP_ARGS="-n $MOD -d extension=$PWD/modules/%{extname}.so" \
+TEST_PHP_ARGS="-n $MOD -d extension=$PWD/modules/%{pecl_name}.so" \
 NO_INTERACTION=1 \
 REPORT_EXIT_STATUS=1 \
 %{__ztsphp} -n run-tests.php --show-diff
@@ -170,27 +169,31 @@ REPORT_EXIT_STATUS=1 \
 
 
 %files
-%doc %{pecl_docdir}/%{extname}
+%{?_licensedir:%license NTS/COPYING}
+%doc %{pecl_docdir}/%{pecl_name}
 %config(noreplace) %{php_inidir}/%{ini_name}
-%{php_extdir}/%{extname}.so
+%{php_extdir}/%{pecl_name}.so
 %{pecl_xmldir}/%{name}.xml
 
 %if %{with_zts}
 %config(noreplace) %{php_ztsinidir}/%{ini_name}
-%{php_ztsextdir}/%{extname}.so
+%{php_ztsextdir}/%{pecl_name}.so
 %endif
 
 
 %files devel
-%doc %{pecl_testdir}/%{extname}
-%{php_incldir}/ext/%{extname}
+%doc %{pecl_testdir}/%{pecl_name}
+%{php_incldir}/ext/%{pecl_name}
 
 %if %{with_zts}
-%{php_ztsincldir}/ext/%{extname}
+%{php_ztsincldir}/ext/%{pecl_name}
 %endif
 
 
 %changelog
+* Mon Oct 16 2017 Remi Collet <remi@remirepo.net> - 2.0.5~RC1-1
+- update to 2.0.5RC1 (beta)
+
 * Tue Oct 03 2017 Remi Collet <remi@fedoraproject.org> - 2.0.4-4
 - rebuild for https://fedoraproject.org/wiki/Changes/php72
 
