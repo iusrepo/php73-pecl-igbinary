@@ -11,7 +11,7 @@
 %global ini_name   40-%{pecl_name}.ini
 
 %global upstream_version 2.0.5
-%global upstream_prever  RC1
+#global upstream_prever  RC1
 
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
@@ -191,6 +191,9 @@ REPORT_EXIT_STATUS=1 \
 
 
 %changelog
+* Mon Nov  6 2017 Remi Collet <remi@remirepo.net> - 2.0.5-1
+- update to 2.0.5 (stable)
+
 * Mon Oct 16 2017 Remi Collet <remi@remirepo.net> - 2.0.5~RC1-1
 - update to 2.0.5RC1 (beta)
 
