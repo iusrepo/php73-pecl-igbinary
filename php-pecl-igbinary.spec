@@ -6,6 +6,10 @@
 #
 # Please, preserve the changelog entries
 #
+
+# we don't want -z defs linker flag
+%undefine _strict_symbol_defs_build
+
 %global pecl_name  igbinary
 %global with_zts   0%{?__ztsphp:1}
 %global ini_name   40-%{pecl_name}.ini
@@ -16,7 +20,7 @@
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        %{upstream_version}%{?upstream_prever:~%{upstream_prever}}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Source0:        http://pecl.php.net/get/%{pecl_name}-%{upstream_version}%{?upstream_prever}.tgz
 License:        BSD
 Group:          System Environment/Libraries
@@ -191,6 +195,9 @@ REPORT_EXIT_STATUS=1 \
 
 
 %changelog
+* Fri Jan 26 2018 Remi Collet <remi@remirepo.net> - 2.0.5-2
+- undefine _strict_symbol_defs_build
+
 * Mon Nov  6 2017 Remi Collet <remi@remirepo.net> - 2.0.5-1
 - update to 2.0.5 (stable)
 
