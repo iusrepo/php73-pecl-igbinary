@@ -14,7 +14,7 @@
 %global with_zts   0%{?__ztsphp:1}
 %global ini_name   40-%{pecl_name}.ini
 
-%global upstream_version 2.0.6
+%global upstream_version 2.0.7
 #global upstream_prever  RC1
 
 Summary:        Replacement for the standard PHP serializer
@@ -196,6 +196,9 @@ REPORT_EXIT_STATUS=1 \
 
 
 %changelog
+* Wed Jun 27 2018 Remi Collet <remi@remirepo.net> - 2.0.7-1
+- update to 2.0.7
+
 * Sun May 13 2018 Remi Collet <remi@remirepo.net> - 2.0.6-1
 - update to 2.0.6 (stable)
 
