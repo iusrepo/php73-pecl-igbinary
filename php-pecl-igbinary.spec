@@ -14,13 +14,13 @@
 %global with_zts   0%{?__ztsphp:1}
 %global ini_name   40-%{pecl_name}.ini
 
-%global upstream_version 2.0.7
+%global upstream_version 2.0.8
 #global upstream_prever  RC1
 
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        %{upstream_version}%{?upstream_prever:~%{upstream_prever}}
-Release:        3%{?dist}
+Release:        1%{?dist}
 Source0:        http://pecl.php.net/get/%{pecl_name}-%{upstream_version}%{?upstream_prever}.tgz
 License:        BSD
 Group:          System Environment/Libraries
@@ -31,6 +31,7 @@ BuildRequires:  gcc
 BuildRequires:  php-pear
 BuildRequires:  php-devel >= 5.2.0
 BuildRequires:  php-pecl-apcu-devel
+BuildRequires:  php-json
 
 Requires:       php(zend-abi) = %{php_zend_api}
 Requires:       php(api) = %{php_core_api}
@@ -149,6 +150,12 @@ fi
     --define extension=%{buildroot}%{php_extdir}/%{pecl_name}.so \
     --modules | grep %{pecl_name}
 
+# Json used in tests
+if [ -f %{php_extdir}/json.so ]; then
+  MOD="$MOD -d extension=json.so"
+fi
+
+
 : upstream test suite
 cd NTS
 TEST_PHP_EXECUTABLE=%{_bindir}/php \
@@ -196,6 +203,9 @@ REPORT_EXIT_STATUS=1 \
 
 
 %changelog
+* Mon Oct 22 2018 Remi Collet <remi@remirepo.net> - 2.0.8-1
+- update to 2.0.8
+
 * Thu Oct 11 2018 Remi Collet <remi@remirepo.net> - 2.0.7-3
 - Rebuild for https://fedoraproject.org/wiki/Changes/php73
 
