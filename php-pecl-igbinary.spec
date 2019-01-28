@@ -23,7 +23,6 @@ Version:        %{upstream_version}%{?upstream_prever:~%{upstream_prever}}
 Release:        1%{?dist}
 Source0:        http://pecl.php.net/get/%{pecl_name}-%{upstream_version}%{?upstream_prever}.tgz
 License:        BSD
-Group:          System Environment/Libraries
 
 URL:            http://pecl.php.net/package/igbinary
 
@@ -53,7 +52,6 @@ based storages for serialized data.
 
 %package devel
 Summary:       Igbinary developer files (header)
-Group:         Development/Libraries
 Requires:      php-pecl-%{pecl_name}%{?_isa} = %{version}-%{release}
 Requires:      php-devel%{?_isa}
 
