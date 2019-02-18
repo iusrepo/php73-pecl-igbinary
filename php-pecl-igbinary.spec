@@ -1,6 +1,6 @@
 # Fedora spec file for php-pecl-igbinary
 #
-# Copyright (c) 2010-2018 Remi Collet
+# Copyright (c) 2010-2019 Remi Collet
 # License: CC-BY-SA
 # http://creativecommons.org/licenses/by-sa/4.0/
 #
@@ -14,13 +14,13 @@
 %global with_zts   0%{?__ztsphp:1}
 %global ini_name   40-%{pecl_name}.ini
 
-%global upstream_version 2.0.8
+%global upstream_version 3.0.0
 #global upstream_prever  RC1
 
 Summary:        Replacement for the standard PHP serializer
 Name:           php-pecl-igbinary
 Version:        %{upstream_version}%{?upstream_prever:~%{upstream_prever}}
-Release:        2%{?dist}
+Release:        1%{?dist}
 Source0:        http://pecl.php.net/get/%{pecl_name}-%{upstream_version}%{?upstream_prever}.tgz
 License:        BSD
 
@@ -28,7 +28,7 @@ URL:            http://pecl.php.net/package/igbinary
 
 BuildRequires:  gcc
 BuildRequires:  php-pear
-BuildRequires:  php-devel >= 5.2.0
+BuildRequires:  php-devel >= 7
 BuildRequires:  php-pecl-apcu-devel
 BuildRequires:  php-json
 
@@ -138,21 +138,19 @@ done
 # drop extension load from phpt
 sed -e '/^extension=/d' -i ?TS/tests/*phpt
 
-# APC required for test 045
-if [ -f %{php_extdir}/apcu.so ]; then
-  MOD="-d extension=apcu.so"
-fi
-
 : simple NTS module load test, without APC, as optional
 %{_bindir}/php --no-php-ini \
     --define extension=%{buildroot}%{php_extdir}/%{pecl_name}.so \
     --modules | grep %{pecl_name}
 
+# APC required for test 045
+if [ -f %{php_extdir}/apcu.so ]; then
+  MOD="-d extension=apcu.so"
+fi
 # Json used in tests
 if [ -f %{php_extdir}/json.so ]; then
   MOD="$MOD -d extension=json.so"
 fi
-
 
 : upstream test suite
 cd NTS
@@ -179,7 +177,6 @@ REPORT_EXIT_STATUS=1 \
 
 
 %files
-%{?_licensedir:%license NTS/COPYING}
 %doc %{pecl_docdir}/%{pecl_name}
 %config(noreplace) %{php_inidir}/%{ini_name}
 %{php_extdir}/%{pecl_name}.so
@@ -201,6 +198,11 @@ REPORT_EXIT_STATUS=1 \
 
 
 %changelog
+* Mon Feb 18 2019 Remi Collet <remi@remirepo.net> - 3.0.0-1
+- update to 3.0.0
+- no API change
+- raise dependency on PHP 7
+
 * Sat Feb 02 2019 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.8-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
 
