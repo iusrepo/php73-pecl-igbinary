@@ -201,6 +201,7 @@ fi
 
 
 %files
+%license NTS/COPYING
 %doc %{pecl_docdir}/%{pecl_name}
 %config(noreplace) %{php_inidir}/%{ini_name}
 %{php_extdir}/%{pecl_name}.so
@@ -225,6 +226,7 @@ fi
 * Wed May  1 2019 Matt Linscott <matt.linscott@gmail.com> - 3.0.1-1
 - Port from Fedora to IUS
 - Install package.xml as %%{pecl_name}.xml, not %%{name}.xml
+- Properly install license file
 
 * Thu Mar 21 2019 Remi Collet <remi@remirepo.net> - 3.0.1-1
 - update to 3.0.1 (no change)
