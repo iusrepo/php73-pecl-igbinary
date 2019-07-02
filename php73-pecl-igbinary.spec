@@ -27,7 +27,8 @@ License:        BSD
 URL:            https://pecl.php.net/package/%{pecl_name}
 
 BuildRequires:  gcc
-BuildRequires:  pear1
+# build require pear1's dependencies to avoid mismatched php stacks
+BuildRequires:  pear1 %{php}-cli %{php}-common %{php}-xml
 BuildRequires:  %{php}-devel
 BuildRequires:  %{php}-pecl-apcu-devel
 BuildRequires:  %{php}-json
